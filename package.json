@@ -1,0 +1,17 @@
+{
+  "name": "uss-enterprise-ncc-1701-d",
+  "version": "1.0.0",
+  "description": "USS Enterprise NCC-1701-D — Complete Walkable Galaxy-Class Starship in Three.js",
+  "type": "module",
+  "scripts": {
+    "dev": "vite --port 5173",
+    "build": "vite build",
+    "preview": "vite preview --port 4173"
+  },
+  "dependencies": {
+    "three": "^0.181.0"
+  },
+  "devDependencies": {
+    "vite": "^6.0.0"
+  }
+}

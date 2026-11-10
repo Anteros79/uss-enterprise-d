@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>USS Enterprise NCC-1701-D — Complete Walkable Galaxy-Class Starship</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'><path fill='%23f59e0b' d='M32 4 L54 58 L32 44 L10 58 Z'/></svg>">
+  <link rel="stylesheet" href="/src/style.css">
+</head>
+<body>
+  <!-- Compact Top LCARS Telemetry & Primary Action Bar (< 12% viewport height) -->
+  <header class="top-lcars-bar" id="top-hud-bar">
+    <div class="brand-block">
+      <span class="lcars-pill-cap">NCC-1701-D</span>
+      <div>
+        <h1>USS ENTERPRISE · GALAXY CLASS</h1>
+        <p id="hud-location-readout">EXTERIOR ORBIT // THREE-QUARTER HERO VIEW</p>
+      </div>
+    </div>
+
+    <!-- Immediate First-Frame Defining Actions -->
+    <nav class="primary-actions" aria-label="Primary Experience Actions">
+      <button type="button" class="hud-btn amber" id="btn-hero-exterior">Explore Exterior</button>
+      <button type="button" class="hud-btn gold" id="btn-hero-bridge">Enter Bridge</button>
+      <button type="button" class="hud-btn teal" id="btn-hero-holodeck">Holodeck 4 [H]</button>
+      <button type="button" class="hud-btn sky" id="btn-hero-tour">Begin Ship Tour</button>
+      <button type="button" class="hud-btn orange" id="btn-hero-separation">Saucer Separation Demo</button>
+      <button type="button" class="hud-btn lavender" id="btn-open-lcars">LCARS Computer [T]</button>
+    </nav>
+
+    <div class="telemetry-chips">
+      <span class="chip" id="chip-hull-state">HULL: DOCKED</span>
+      <span class="chip" id="chip-warp-state">WARP 2.0</span>
+      <span class="chip" id="chip-fps">60 FPS</span>
+    </div>
+  </header>
+
+  <!-- Main 3D Viewport & Interactive Overlays -->
+  <main id="viewport-container">
+    <canvas id="three-canvas" aria-label="3D Interactive USS Enterprise NCC-1701-D Simulation"></canvas>
+
+    <!-- Center Reticle & Contextual Interaction Prompt (Visible in Interior Walk Mode) -->
+    <div id="reticle-overlay" class="is-hidden" aria-live="polite">
+      <div class="reticle-dot"></div>
+      <div id="interaction-prompt" class="interaction-prompt is-hidden"></div>
+    </div>
+
+    <!-- Active Seated / Carried Prop / Turbolift Status Banner -->
+    <div id="status-toast" class="status-toast is-hidden" aria-live="polite"></div>
+
+    <!-- Contextual Holodeck 4 Interactive Program Bar (Visible when inside Deck 11 Holodeck 4) -->
+    <section id="holodeck-hud" class="holodeck-hud is-hidden" aria-label="Holodeck 4 Program Controls">
+      <div class="holodeck-hud-header">
+        <span class="holodeck-badge">DECK 11 · HOLODECK 4</span>
+        <span id="holodeck-hud-status">PROGRAM: SCOTTY'S 1966 USS ENTERPRISE NCC-1701 BRIDGE ("RELICS")</span>
+        <div class="holodeck-hud-quick">
+          <button type="button" class="holo-mini-btn" id="btn-holo-hud-arch">Toggle Arch</button>
+          <button type="button" class="holo-mini-btn" id="btn-holo-hud-spawn">Cycle Hologram</button>
+        </div>
+      </div>
+      <div class="holodeck-hud-programs">
+        <button type="button" class="holo-prog-btn is-active" data-holo-hud="tos_bridge">1966 NCC-1701 ("Relics")</button>
+        <button type="button" class="holo-prog-btn" data-holo-hud="klingon_arena">Klingon Combat Arena</button>
+        <button type="button" class="holo-prog-btn" data-holo-hud="sherlock_noir">221B Baker St Mystery</button>
+        <button type="button" class="holo-prog-btn" data-holo-hud="stellar_cartography">3D Stellar Cartography</button>
+        <button type="button" class="holo-prog-btn" data-holo-hud="grid">Laser Grid + Spawner</button>
+      </div>
+    </section>
+
+    <!-- Exterior Picture-in-Picture (PiP) Frame Label (Rendered via WebGL Scissor in bottom-right when indoors) -->
+    <div id="pip-frame-overlay" class="pip-frame-overlay is-hidden">
+      <div class="pip-header">
+        <span>EXTERNAL SENSOR INSET (LIVE 3D)</span>
+        <button type="button" id="btn-hide-pip" aria-label="Hide Exterior Inset">×</button>
+      </div>
+    </div>
+
+    <!-- Collapsible Side Operations & Inspection Panel (Uses native <details>/<summary>) -->
+    <aside class="ops-drawer" id="ops-drawer" aria-label="Ship Controls and Inspection Panel">
+      <details class="ops-master-details" open>
+        <summary class="ops-master-summary">
+          <span>STARSHIP OPERATIONS & DECK CONTROLS</span>
+          <span class="summary-chevron" aria-hidden="true">▾</span>
+        </summary>
+
+        <div class="ops-panel-body">
+          <!-- 1. Exploration, Cutaway & Exterior Landmarks -->
+          <details class="ops-section" open>
+            <summary>1 · CAMERA, CUTAWAY & EXTERIOR INSPECTION</summary>
+            <div class="ops-section-content">
+              <div class="btn-grid-2">
+                <button type="button" class="panel-btn is-active" data-cam-mode="exterior_orbit">Exterior Orbit</button>
+                <button type="button" class="panel-btn" data-cam-mode="interior_walk">1st-Person Walk</button>
+                <button type="button" class="panel-btn" data-cam-mode="free_flight">Free-Flight 6DOF</button>
+                <button type="button" class="panel-btn" data-cam-mode="guided_tour">Guided Tour</button>
+              </div>
+
+              <label class="field-label" for="select-ext-landmark">Close Exterior Inspection Points:</label>
+              <select id="select-ext-landmark" class="panel-select">
+                <option value="ext_three_quarter">Three-Quarter Ventral Hero View (Ref 1, 4, 5, 8)</option>
+                <option value="ext_dorsal_studio">Dorsal Studio Model Orthoview (Ref 1)</option>
+                <option value="ext_cobra_prow">Cobra Head & Secondary Hull Prow Close-Up (Ref 3, 5)</option>
+                <option value="ext_front_ortho">Front Orthographic Studio Profile (Ref 4)</option>
+                <option value="ext_aft_fantail">Stardrive Shuttlebays 2 & 3 + Primary Impulse (Ref 1, 4)</option>
+                <option value="ext_shuttlebay">Deck 4 Main Shuttlebay 1 & Saucer Impulse (Ref 1)</option>
+                <option value="ext_separation_interface">Aft Stardrive & Cobra-Head Vista (Ref 3, 5)</option>
+                <option value="ext_bridge_module">Deck 1 Bridge, Ready Room & Observation Windows</option>
+                <option value="ext_ten_forward">Deck 10 Bow Rim — Ten Forward Panoramic Windows</option>
+                <option value="ext_deflector">Main Navigational Deflector & Torpedo Tube</option>
+                <option value="ext_nacelles">Starboard Warp Nacelle & Bussard Collector</option>
+              </select>
+
+              <div class="field-label">Hull Cutaway & Anatomical Overview:</div>
+              <div class="btn-grid-3">
+                <button type="button" class="panel-btn is-active" data-cutaway="off">Solid Hull</button>
+                <button type="button" class="panel-btn" data-cutaway="cutaway">Deck Cutaway</button>
+                <button type="button" class="panel-btn" data-cutaway="exploded">Exploded Decks</button>
+              </div>
+            </div>
+          </details>
+
+          <!-- 2. Walkable Interior Rooms & 42-Deck Selector -->
+          <details class="ops-section" open>
+            <summary>2 · WALKABLE ROOMS & 42-DECK SELECTOR</summary>
+            <div class="ops-section-content">
+              <label class="field-label" for="select-hero-room">Enter Signature Interior Compartment:</label>
+              <select id="select-hero-room" class="panel-select">
+                <option value="deck1_bridge">Deck 1 — Main Bridge</option>
+                <option value="deck1_ready_room">Deck 1 — Captain's Ready Room</option>
+                <option value="deck1_observation">Deck 1 — Observation Lounge</option>
+                <option value="deck4_shuttlebay">Deck 4 — Main Shuttlebay 1 (Shuttle Goddard)</option>
+                <option value="deck8_quarters">Deck 8 — Senior Officer Quarters</option>
+                <option value="deck8_transporter">Deck 8 — Transporter Room 1</option>
+                <option value="deck8_sep_interface">Deck 8 — Saucer Separation Airlock</option>
+                <option value="deck8_battle_bridge">Deck 8 — Battle Bridge (Stardrive)</option>
+                <option value="deck10_ten_forward">Deck 10 — Ten Forward Lounge (Bow Windows)</option>
+                <option value="deck11_holodeck">Deck 11 — Holodeck 4 (5 Playable Worlds) & Science Lab</option>
+                <option value="deck12_sickbay">Deck 12 — Primary Sickbay & CMO Office</option>
+                <option value="deck36_engineering">Deck 36 — Main Engineering & Warp Core</option>
+              </select>
+              <div class="btn-grid-2" style="margin-top:6px;">
+                <button type="button" class="panel-btn amber" id="btn-go-selected-room">Enter Selected Room</button>
+                <button type="button" class="panel-btn" id="btn-ride-turbolift-room">Ride Turbolift There</button>
+              </div>
+
+              <label class="field-label" for="select-any-deck" style="margin-top:8px;">All 42 Decks Direct Access:</label>
+              <div class="flex-row">
+                <select id="select-any-deck" class="panel-select"></select>
+                <button type="button" class="panel-btn" id="btn-go-any-deck">Visit Deck</button>
+              </div>
+            </div>
+          </details>
+
+          <!-- 3. Saucer Separation & Independent Flight -->
+          <details class="ops-section" open>
+            <summary>3 · SAUCER SEPARATION & BRIDGE AUTHORITY</summary>
+            <div class="ops-section-content">
+              <div class="sep-readout-box">
+                <div>State: <strong id="panel-sep-state">Docked</strong></div>
+                <div>Main Bridge: <span id="panel-main-auth">Integrated Vessel</span></div>
+                <div>Battle Bridge: <span id="panel-battle-auth">Standby</span></div>
+              </div>
+              <div class="btn-grid-2">
+                <button type="button" class="panel-btn orange" id="btn-panel-separate">Separate Saucer</button>
+                <button type="button" class="panel-btn sky" id="btn-panel-reconnect">Reconnect Hulls</button>
+              </div>
+              <div class="field-label" style="margin-top:6px;">Exterior Camera Tracking Target:</div>
+              <div class="btn-grid-3">
+                <button type="button" class="panel-btn is-active" data-track-sec="both">Both</button>
+                <button type="button" class="panel-btn" data-track-sec="saucer">Saucer</button>
+                <button type="button" class="panel-btn" data-track-sec="stardrive">Stardrive</button>
+              </div>
+            </div>
+          </details>
+
+          <!-- 4. Alert State, Crew, Audio, PiP & Emergency Reset -->
+          <details class="ops-section">
+            <summary>4 · ALERTS, CREW, AUDIO & SYSTEM RESET</summary>
+            <div class="ops-section-content">
+              <div class="field-label">Ship Alert Condition:</div>
+              <div class="btn-grid-4">
+                <button type="button" class="panel-btn is-active" data-alert-btn="normal">Normal</button>
+                <button type="button" class="panel-btn" data-alert-btn="reduced">Dimmed</button>
+                <button type="button" class="panel-btn" data-alert-btn="yellow">Yellow</button>
+                <button type="button" class="panel-btn warn" data-alert-btn="red">Red Alert</button>
+              </div>
+
+              <div class="btn-grid-2" style="margin-top:8px;">
+                <button type="button" class="panel-btn" id="btn-toggle-crew">Crew: Populated</button>
+                <button type="button" class="panel-btn" id="btn-toggle-pip">Ext Inset: ON</button>
+              </div>
+
+              <div class="slider-mini">
+                <label for="audio-ambience">Ambience Vol</label>
+                <input type="range" id="audio-ambience" min="0" max="1" step="0.05" value="0.35">
+                <label for="audio-sfx">SFX Vol</label>
+                <input type="range" id="audio-sfx" min="0" max="1" step="0.05" value="0.55">
+              </div>
+
+              <div class="btn-grid-3" style="margin-top:8px;">
+                <button type="button" class="panel-btn" id="btn-mute-audio">Mute: OFF</button>
+                <button type="button" class="panel-btn" id="btn-photo-mode">Photo Mode [P]</button>
+                <button type="button" class="panel-btn warn" id="btn-reset-ship">Reset All</button>
+              </div>
+
+              <div class="controls-help">
+                <strong>Controls:</strong> Drag mouse to look/orbit · <code>WASD</code>/Arrows move · <code>Shift</code> sprint · <code>Click</code> or <code>E</code> operate console/door/chair · <code>C</code> Jefferies crawl · <code>G</code> place item · <code>Space</code> stand up.
+              </div>
+            </div>
+          </details>
+        </div>
+      </details>
+    </aside>
+  </main>
+
+  <!-- Native Modal <dialog> for the 12-Application LCARS Computer Terminal -->
+  <!-- Follows modern-web-guidance: native <dialog>, closedby="any", no redundant role="dialog" or aria-modal -->
+  <dialog id="lcars-dialog" closedby="any" aria-labelledby="lcars-dialog-title">
+    <div class="lcars-frame">
+      <div class="lcars-header-bar">
+        <div class="lcars-elbow-top"></div>
+        <h2 id="lcars-dialog-title">LCARS 47457 // MAIN COMPUTER TERMINAL</h2>
+        <form method="dialog" class="lcars-close-form">
+          <button type="submit" value="close" class="lcars-close-btn" autofocus>CLOSE TERMINAL [ESC]</button>
+        </form>
+      </div>
+
+      <div class="lcars-body-layout">
+        <nav id="lcars-app-nav" class="lcars-sidebar-nav" aria-label="LCARS Computer Applications"></nav>
+        <section id="lcars-app-content" class="lcars-main-pane" aria-live="polite"></section>
+      </div>
+    </div>
+  </dialog>
+
+  <script type="module" src="/src/main.js"></script>
+</body>
+</html>
